@@ -86,7 +86,7 @@
     position: absolute;
     width: var(--petal-width);
     height: var(--petal-height);
-    background: linear-gradient(to bottom, var(--petal-color-start), var(--petal-color-end));
+    background: linear-gradient(to bottom, #FF69B4, #FFB6C1); /* Default colors */
     border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
     transform-origin: bottom center;
     top: calc(0px - var(--petal-height) / 2); /* Correct petal positioning */
@@ -190,7 +190,8 @@
     background-color: white;
     border-radius: 50%;
     pointer-events: none;
-    animation: twinkle var(--twinkle-duration) ease-in-out infinite;
+    animation: twinkle 5s ease-in-out infinite; /* Default duration */
+    animation-duration: var(--twinkle-duration, 5s); /* Use variable if set, with fallback */
     z-index: -1;
   }
   
@@ -216,6 +217,203 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 <script>
   // JavaScript Improvements:  More efficient, readable, and robust
+
+  // Define a complete set of musical notes for our melodies
+  // Base octave notes (octave 3)
+  const g3 = 196.00;
+  const a3 = 220.00;
+  const b3 = 246.94;
+  const c3 = 130.81;
+  
+  // Middle octave (octave 4)
+  const c4 = 261.63;
+  const d4 = 293.66;
+  const eb4 = 311.13; // Flat
+  const e4 = 329.63;
+  const f4 = 349.23;
+  const g4 = 392.00;
+  const a4 = 440.00;
+  const bb4 = 466.16; // Flat
+  const b4 = 493.88;
+  
+  // Upper octave (octave 5)
+  const c5 = 523.25;
+  const d5 = 587.33;
+  const e5 = 659.25;
+  const f5 = 698.46;
+  const g5 = 783.99;
+  
+  // Even higher notes (octave 6) for special effects
+  const c6 = 1046.50;
+  
+  // Silent note for rests in melodies
+  const SILENCE = 0;
+
+  // Define instrument types early with better timbre profiles
+  const instruments = [
+    { 
+      name: 'Crystal Bell', 
+      type: 'sine', 
+      harmonics: [1, 0.5, 0.25, 0.125], 
+      detune: 3,
+      attack: 0.01,
+      decay: 0.2,
+      sustain: 0.7,
+      release: 0.4
+    },
+    { 
+      name: 'Soft Piano', 
+      type: 'triangle', 
+      harmonics: [1, 0.1, 0.05], 
+      detune: 2,
+      attack: 0.02,
+      decay: 0.1,
+      sustain: 0.5,
+      release: 0.3
+    },
+    { 
+      name: 'Harp', 
+      type: 'sine', 
+      harmonics: [1, 0.8, 0.4, 0.2], 
+      detune: 4,
+      attack: 0.005,
+      decay: 0.3,
+      sustain: 0.3,
+      release: 0.8
+    },
+    { 
+      name: 'Music Box', 
+      type: 'sine', 
+      harmonics: [1, 0, 0.3, 0, 0.15, 0, 0.075], 
+      detune: 0,
+      attack: 0.001,
+      decay: 0.1,
+      sustain: 0.2,
+      release: 0.3
+    },
+    { 
+      name: 'Soft Flute', 
+      type: 'sine', 
+      harmonics: [1, 0.1, 0.05], 
+      detune: 5,
+      attack: 0.04,
+      decay: 0.05,
+      sustain: 0.9,
+      release: 0.1
+    },
+    { 
+      name: 'Fairy Chimes', 
+      type: 'sine', 
+      harmonics: [1, 0.6, 0.3, 0.1], 
+      detune: 10,
+      attack: 0.001,
+      decay: 0.15,
+      sustain: 0.4,
+      release: 0.6
+    }
+  ];
+
+  // Enhanced melodic phrases with famous melodies and video game tunes
+  const melodicPhrases = [
+    // Original simple patterns
+    [c4, e4, g4, c5],           // C major arpeggio
+    [c5, g4, e4, c4],           // C major arpeggio descending
+    
+    // Famous melody fragments
+    [e4, e4, f4, g4, g4, f4, e4, d4], // Ode to Joy (Beethoven)
+    [g4, e4, e4, SILENCE, f4, d4, d4],      // Twinkle Twinkle Little Star
+    [c4, d4, e4, c4, e4, c4, e4],     // Für Elise (simplified)
+    [c4, g4, g4, a4, g4, SILENCE, b4, c5],  // Somewhere Over the Rainbow
+    
+    // VIDEO GAME MUSIC SECTION
+    
+    // Super Mario Bros Theme
+    [e4, e4, SILENCE, e4, SILENCE, c4, e4, SILENCE, g4],
+    
+    // Zelda's Lullaby (Legend of Zelda)
+    [e4, g4, d4, SILENCE, e4, g4, d4],
+    
+    // Song of Storms (Legend of Zelda)
+    [d4, f4, d5, SILENCE, d4, f4, d5],
+    
+    // Lost Woods / Saria's Song (Legend of Zelda)
+    [f4, a4, b4, f4, a4, b4, f4, a4, b4, e5, d5, b4],
+    
+    // Tetris Theme (Korobeiniki)
+    [e5, b4, c5, d5, c5, b4, a4, a4, c5, e5, d5, c5],
+    
+    // Pokemon Center Healing Theme
+    [g4, c5, c5, c5, b4, c5, g4, e4],
+    
+    // Undertale - Megalovania Intro
+    [d4, d4, d5, SILENCE, a4, SILENCE, g4, SILENCE, f4],
+    
+    // Sonic the Hedgehog - Green Hill Zone
+    [e4, g4, c5, e5, SILENCE, d5, c5, b4],
+    
+    // Kirby's Dream Land Theme
+    [c5, b4, a4, g4, a4, b4, c5, d5, e5],
+    
+    // Final Fantasy Victory Fanfare
+    [c4, c4, c4, c4, SILENCE, g3, c4, e4, g4, c5],
+    
+    // Chrono Trigger - Peaceful Days
+    [a4, c5, d5, e5, c5, d5, e5, g5, e5],
+    
+    // Minecraft Calm
+    [c4, g4, c5, e5, g5, e5, c5, g4],
+    
+    // Animal Crossing Intro Bit
+    [a4, e5, d5, c5, b4, a4, g4, e4, g4, a4],
+    
+    // Stardew Valley Theme Fragment
+    [e4, g4, a4, b4, e5, b4, a4, g4, e4],
+    
+    // Portal - Still Alive Theme
+    [e4, a4, e4, b4, e4, g4, e4, c5, b4, a4],
+    
+    // The Last of Us Theme
+    [e4, f4, e4, a3, c4, e4, f4, g4, f4, e4],
+    
+    // Hollow Knight Theme
+    [b4, e5, g5, f5, e5, d5, b4, SILENCE, c5, d5],
+    
+    // Among Us Task Complete
+    [c5, e5, g5, c6, g5, c6],
+    
+    // Halo Theme
+    [e4, g4, e4, g4, e4, e5, d5, b4, a4, b4],
+    
+    // Skyrim Theme
+    [a3, c4, f4, g4, a4, f4, a4, c5],
+    
+    // Harry Potter theme fragment (not a game but fits well)
+    [b4, e5, g4, f4, e5, b4, a4, f4],
+    
+    // Star Wars - Force Theme fragment
+    [g4, c5, b4, a4, g4, c5, b4, a4, g4],
+    
+    // Game of Thrones theme hint
+    [g4, c4, eb4, f4, g4, c4, eb4, f4],
+    
+    // Studio Ghibli-inspired melody (like Totoro or Spirited Away)
+    [a4, c5, a4, e4, g4, e4, d4, e4, a4],
+    
+    // Playful music box-like melody
+    [c5, a4, c5, g4, c5, e5, c5, g4, a4],
+    
+    // Dreamy ascending pattern
+    [c4, e4, g4, c5, e5, g5, e5, c5, g4],
+    
+    // Fairy-like magical descent
+    [e5, c5, a4, e4, g4, e4, c4, d4, e4],
+    
+    // Music box waltz feel
+    [c4, e4, g4, c5, e4, g4, c4, e4, g4, c5, e4, g4],
+    
+    // Ethereal pattern
+    [e5, b4, g4, e4, b4, g4, e5, b4, g4]
+  ];
 
   const flowerContainer = document.getElementById('flowerContainer');
   const body = document.body;
@@ -253,16 +451,11 @@
   // Audio Context - Moved outside functions for better performance
   let audioContext;
   let currentInstrument = 0;
-  
-  // Define different instrument types
-  const instruments = [
-    { name: 'Sine Wave', type: 'sine', harmonics: [], detune: 0 },
-    { name: 'Music Box', type: 'sine', harmonics: [1, 0.6, 0.2], detune: 5 },
-    { name: 'Bell', type: 'sine', harmonics: [1, 0.3, 0.1, 0.05], detune: 10 },
-    { name: 'Flute', type: 'sine', harmonics: [1, 0.1], detune: 2 },
-    { name: 'Xylophone', type: 'sine', harmonics: [1], detune: 0, attack: 0.01, decay: 0.2, release: 0.3 },
-    { name: 'Choir', type: 'sine', harmonics: [1, 0.5, 0.3, 0.2, 0.1], detune: 8 }
-  ];
+
+  // Master reverb and compressor for better overall sound
+  let masterReverb;
+  let masterCompressor;
+
   
   // Create audio context on first interaction (to avoid Chrome's autoplay policy)
   function initAudioContext() {
@@ -298,37 +491,12 @@
     }
   }
   
-  // Frequencies for C Major Pentatonic Scale (C-D-E-G-A)
-  const c4 = 261.63;
-  const d4 = 293.66;
-  const e4 = 329.63;
-  const g4 = 392.00;
-  const a4 = 440.00;
-  const c5 = 523.25;
-  const eb4 = 311.13; // Eb4 (from C minor pentatonic - for modal mixture)
-  const bb4 = 466.16; // Bb4 (from C minor pentatonic - for modal mixture)
-
-  // Melodic Phrases based on C Major Pentatonic with Rhythmic Variation
-  const melodicPhrases = [
-    [c4, d4, e4, g4],       // Phrase 1: C - D - E - G
-    [e4, d4, c4, a4],       // Phrase 2: E - D - C - A
-    [g4, a4, c5, e4],       // Phrase 3: G - A - C (octave) - E
-    [a4, g4, e4, d4],       // Phrase 4: A - G - E - D
-    [c4, e4, g4, c5],       // Phrase 5: C - E - G - C (octave)
-    [d4, c4, a4, g4],       // Phrase 6: D - C - A - G
-    [e4, g4, a4, e4],       // Phrase 7: E - G - A - E
-    [g4, e4, d4, c4],       // Phrase 8: G - E - D - C
-    [c4, eb4, g4, bb4],     // Phrase 9: C - Eb - G - Bb (Minor Pentatonic - Use Sparingly!)
-    [e4, c4, g4],           // Phrase 10: E - C - G (Simple Triad)
-    [a4, e4, c4],           // Phrase 11: A - E - C (Simple Triad)
-    [g4, d4, c4],           // Phrase 12: G - D - C
-    [c5, a4, g4, e4],       // Phrase 13: C5 - A - G - E
-    [d4, g4, c5]            // Phrase 14: D - G - C5
-  ];
+  // Note frequencies are defined at the top of the file
 
   // Function to play a single note with more control over ADSR envelope
   function playNote(frequency, startTime, duration, gainValue, attack, decay, sustainLevel, release) {
-    if (!audioContext) return; // Safety check
+    // Return early for silence/rest notes (frequency of 0)
+    if (!audioContext || frequency === 0) return; // Safety check
     
     const instrument = instruments[currentInstrument];
     
@@ -461,7 +629,20 @@
         particle.style.width = '5px';
         particle.style.height = '5px';
         particle.style.borderRadius = '50%';
-        particle.style.backgroundColor = getComputedStyle(petal).getPropertyValue('--petal-color-start');
+        
+        // Get background color safely (fallback to pink if variable not set)
+        let bgColor = "#FF69B4"; // Default color
+        try {
+          const computedStyle = getComputedStyle(petal);
+          const varColor = computedStyle.getPropertyValue('--petal-color-start');
+          if (varColor && varColor.trim() !== '') {
+            bgColor = varColor;
+          }
+        } catch (e) {
+          // Use default color if there's an error
+        }
+        
+        particle.style.backgroundColor = bgColor;
         particle.style.left = `${rect.left + rect.width/2}px`;
         particle.style.top = `${rect.top + rect.height/2}px`;
         particle.style.opacity = '0.7';
@@ -480,9 +661,17 @@
       }
     }, 100); // Create a trail particle every 100ms
 
-    // Play a random phrase from the melodicPhrases array
-    const randomIndex = Math.floor(Math.random() * melodicPhrases.length);
-    playPhrase(melodicPhrases[randomIndex]);
+    // Play a random phrase from the melodicPhrases array - we'll define this later
+    // Save this for when melodicPhrases is defined
+    const playRandomPhrase = () => {
+      if (typeof melodicPhrases !== 'undefined' && melodicPhrases.length > 0) {
+        const randomIndex = Math.floor(Math.random() * melodicPhrases.length);
+        playPhrase(melodicPhrases[randomIndex]);
+      }
+    };
+    
+    // Schedule this to run after everything is defined
+    setTimeout(playRandomPhrase, 0);
 
     gsap.to(petal, {
       y: 200,
@@ -496,9 +685,22 @@
         petal.remove();
         createFallingFlowerEmoji(); // Create emoji after petal falls
         
-        // Create a burst effect at the petal's last position
-        const burstX = parseInt(petal.style.transform.split('translateX(')[1]) || 0;
-        const burstY = parseInt(petal.style.transform.split('translateY(')[1]) || 200;
+        // Get the final position more safely
+        let burstX = 0;
+        let burstY = 200;
+        
+        // Try to extract transform values, but use defaults if it fails
+        try {
+          const transform = petal.style.transform || '';
+          const xMatch = transform.match(/translateX\(([^)]+)\)/);
+          const yMatch = transform.match(/translateY\(([^)]+)\)/);
+          
+          if (xMatch && xMatch[1]) burstX = parseInt(xMatch[1], 10) || 0;
+          if (yMatch && yMatch[1]) burstY = parseInt(yMatch[1], 10) || 200;
+        } catch (e) {
+          // Use defaults if parsing fails
+        }
+        
         createSparkles(window.innerWidth/2 + burstX, window.innerHeight/2 + burstY/2);
       }
     });
@@ -527,7 +729,14 @@
         // Create a few sparkling particles around the emoji
         if (Math.random() > 0.5) {
             setTimeout(() => {
-                createSparkles(parseInt(emoji.style.left), parseInt(emoji.offsetTop) + 50);
+                try {
+                    const leftPos = parseFloat(emoji.style.left) || 0;
+                    const topPos = emoji.offsetTop + 50 || 50;
+                    createSparkles(leftPos, topPos);
+                } catch (e) {
+                    // If parsing fails, use default values
+                    createSparkles(window.innerWidth/2, 50);
+                }
             }, Math.random() * 1000 + 500);
         }
 
@@ -910,6 +1119,252 @@
     // Remove the event listener after first click
     window.removeEventListener('click', initialClick);
   }, {once: true});
+  // Audio instrument definitions already moved to the top of the file
+
+// Master effects already defined at the top of the file
+
+// Enhanced audio context initialization
+function initAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)({
+      latencyHint: 'interactive',
+      sampleRate: 48000
+    });
+    
+    // Create master effects
+    setupMasterEffects();
+  }
+}
+
+// Set up master effects chain
+function setupMasterEffects() {
+  // Create compressor to even out volume and prevent clipping
+  masterCompressor = audioContext.createDynamicsCompressor();
+  masterCompressor.threshold.value = -24;
+  masterCompressor.knee.value = 30;
+  masterCompressor.ratio.value = 12;
+  masterCompressor.attack.value = 0.003;
+  masterCompressor.release.value = 0.25;
+  masterCompressor.connect(audioContext.destination);
+  
+  // Create convolver for reverb effect
+  masterReverb = audioContext.createConvolver();
+  
+  // Create custom impulse response for reverb
+  const reverbLength = 2; // 2 seconds reverb
+  const sampleRate = audioContext.sampleRate;
+  const impulseLength = sampleRate * reverbLength;
+  const impulseResponse = audioContext.createBuffer(2, impulseLength, sampleRate);
+  
+  for (let channel = 0; channel < 2; channel++) {
+    const channelData = impulseResponse.getChannelData(channel);
+    for (let i = 0; i < impulseLength; i++) {
+      // Exponential decay for natural reverb sound
+      channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / impulseLength, 1.5);
+    }
+  }
+  
+  masterReverb.buffer = impulseResponse;
+  
+  // Create gain node for reverb mix (wet/dry)
+  const reverbGain = audioContext.createGain();
+  reverbGain.gain.value = 0.2; // Subtle reverb
+  
+  // Connect reverb to compressor
+  masterReverb.connect(reverbGain);
+  reverbGain.connect(masterCompressor);
+}
+
+// Apply frequency modulation for more expressive sound
+function applyFrequencyModulation(oscillator, baseFrequency, startTime, duration) {
+  // Create a very subtle vibrato effect
+  const vibratoAmount = baseFrequency * 0.005; // 0.5% vibrato
+  const vibratoSpeed = 5; // 5 Hz
+  
+  // Apply vibrato using the frequency parameter
+  for (let i = 0; i < duration * 10; i++) {
+    const time = startTime + (i / 10);
+    const vibratoValue = baseFrequency + Math.sin(2 * Math.PI * vibratoSpeed * (time - startTime)) * vibratoAmount;
+    oscillator.frequency.linearRampToValueAtTime(vibratoValue, time);
+  }
+}
+
+// Apply ADSR envelope with smoother curves
+function applyEnvelope(gainParam, startTime, duration, peakValue, attack, decay, sustainLevel, release) {
+  // Start at zero
+  gainParam.setValueAtTime(0, startTime);
+  
+  // Attack phase - exponential curve for more natural sound
+  gainParam.setTargetAtTime(peakValue, startTime, attack / 3);
+  
+  // Decay phase - exponential descent to sustain level
+  const decayStartTime = startTime + attack;
+  gainParam.setTargetAtTime(peakValue * sustainLevel, decayStartTime, decay / 3);
+  
+  // Release phase - exponential fade out
+  const releaseStartTime = startTime + duration - release;
+  gainParam.setTargetAtTime(0.0001, releaseStartTime, release / 3);
+}
+
+// Enhanced note playing function
+function playNote(frequency, startTime, duration, gainValue, attack, decay, sustainLevel, release) {
+  if (!audioContext) return;
+  
+  const instrument = instruments[currentInstrument];
+  
+  // Use better envelope parameters from the instrument definition
+  const instrumentAttack = instrument.attack || attack;
+  const instrumentDecay = instrument.decay || decay;
+  const instrumentSustain = instrument.sustain || sustainLevel;
+  const instrumentRelease = instrument.release || release;
+  
+  // Create oscillator for the main note
+  const primaryOscillator = audioContext.createOscillator();
+  primaryOscillator.type = instrument.type;
+  primaryOscillator.frequency.setValueAtTime(frequency, startTime);
+  
+  // Apply slight detune for more organic sound
+  if (instrument.detune) {
+    primaryOscillator.detune.setValueAtTime(instrument.detune, startTime);
+  }
+  
+  // Apply slight frequency modulation for more liveliness
+  applyFrequencyModulation(primaryOscillator, frequency, startTime, duration);
+  
+  // Create a new gain node for the note's volume
+  const mainGain = audioContext.createGain();
+  mainGain.gain.setValueAtTime(0, startTime);
+  
+  // Apply envelope to the gain node
+  applyEnvelope(mainGain.gain, startTime, duration, gainValue, 
+                instrumentAttack, instrumentDecay, instrumentSustain, instrumentRelease);
+
+  // Apply filtering for a warmer tone
+  const filter = audioContext.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 8000; // Adjust to taste
+  filter.Q.value = 0.5;
+  
+  // Connect the oscillator to the filter and gain
+  primaryOscillator.connect(filter);
+  filter.connect(mainGain);
+  
+  // Connect to both dry and wet (reverb) paths
+  mainGain.connect(masterCompressor); // Dry path
+  mainGain.connect(masterReverb);     // Wet path
+  
+  // Start the oscillator
+  primaryOscillator.start(startTime);
+  primaryOscillator.stop(startTime + duration + instrumentRelease);
+  
+  // Create harmonics for more complex instrument sounds
+  if (instrument.harmonics && instrument.harmonics.length > 0) {
+    instrument.harmonics.forEach((gain, index) => {
+      if (gain > 0) {
+        // Create an oscillator for each harmonic
+        const harmonicOsc = audioContext.createOscillator();
+        harmonicOsc.type = instrument.type;
+        
+        // Set frequency to a multiple of the base frequency
+        const harmonicNumber = index + 2;
+        harmonicOsc.frequency.setValueAtTime(frequency * harmonicNumber, startTime);
+        
+        // Apply gentle detune to each harmonic for chorus effect
+        const harmonicDetune = instrument.detune ? instrument.detune * (index + 1) / 2 : 0;
+        harmonicOsc.detune.setValueAtTime(harmonicDetune, startTime);
+        
+        // Create a gain node for this harmonic
+        const harmonicGain = audioContext.createGain();
+        harmonicGain.gain.setValueAtTime(0, startTime);
+        
+        // Apply envelope to the harmonic
+        applyEnvelope(harmonicGain.gain, startTime, duration, gainValue * gain, 
+                    instrumentAttack, instrumentDecay, instrumentSustain, instrumentRelease);
+        
+        // Connect the harmonic through the filter chain
+        harmonicOsc.connect(harmonicGain);
+        harmonicGain.connect(filter);
+        
+        // Start the harmonic oscillator
+        harmonicOsc.start(startTime);
+        harmonicOsc.stop(startTime + duration + instrumentRelease);
+      }
+    });
+  }
+}
+
+// Improved function to play a melodic phrase
+function playPhrase(phrase) {
+  if (isMuted) return;
+  
+  initAudioContext();
+  
+  const now = audioContext.currentTime;
+  const noteDuration = 0.35; // Shorter notes for better clarity
+  const gap = 0.05;         // Shorter gaps between notes
+  let time = now;
+  
+  // Reduced gain for better mixing
+  const gainValue = 0.05;
+  
+  phrase.forEach(frequency => {
+    playNote(frequency, time, noteDuration, gainValue, 
+             0.03, 0.1, 0.6, 0.2);
+    time += noteDuration + gap;
+  });
+}
+
+// Improved Rainbow Chord function
+function playRainbowChord() {
+  if (isMuted || !audioContext) return;
+  
+  const originalInstrument = currentInstrument;
+  const now = audioContext.currentTime;
+  
+  // Create a rich chord with better spacing
+  const notes = [
+    c4, 
+    e4, 
+    g4, 
+    c5, 
+    e5
+  ];
+  
+  // Slightly longer chord duration for better effect
+  const chordDuration = 3;
+  const entryDelay = 0.15;
+  
+  // Arpeggiate the chord for a more magical effect
+  instruments.forEach((instrument, i) => {
+    currentInstrument = i;
+    
+    notes.forEach((note, j) => {
+      // Stagger the notes for a harp-like effect
+      const startTime = now + (i * entryDelay) + (j * 0.1);
+      
+      // Adjust volume for better mix
+      const adjustedVolume = 0.025 / Math.sqrt(instruments.length);
+      
+      playNote(
+        note,
+        startTime,
+        chordDuration - (j * 0.1),  // Slightly shorter duration for higher notes
+        adjustedVolume,
+        0.03,
+        0.15,
+        0.6,
+        0.8
+      );
+    });
+  });
+  
+  // Return to the original instrument
+  currentInstrument = originalInstrument;
+}
+
+// Melodic phrases defined at the top of the file
+
+// Notes defined at the top of the file
 </script>
 
 </body>
